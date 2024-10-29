@@ -1,0 +1,33 @@
+version: '3'
+services:
+  app:
+    networks:
+      - backend
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - ./src/main/resources/application.yaml:/app/application.yaml
+  db:
+    networks:
+      - backend
+    platform: linux/x86_64 # For m1 mac
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=medical_insurance
+      - MYSQL_USER=myuser
+      - MYSQL_PASSWORD=mypassword
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+
+volumes:
+  mysql_data:
+networks:
+    backend:
+        driver: bridge
