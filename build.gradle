@@ -14,6 +14,8 @@ java {
 }
 
 configurations {
+	all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-simple'
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
@@ -27,9 +29,27 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+
+//	implementation 'com.mysql:mysql-connector-j:8.0.33'
+	runtimeOnly 'com.mysql:mysql-connector-j' // Spring Boot의 dependency management 플러그인이 자동으로 적절한 버전의 MySQL 커넥터를 관리해주므로 주석 처리
+
+	// PDF 처리
+	implementation 'org.apache.pdfbox:pdfbox:2.0.27'
+	implementation 'technology.tabula:tabula:1.0.5'
+
+	// AI/ML
+	//implementation 'dev.langchain4j:langchain4j:0.23.0'
+	//implementation 'dev.langchain4j:langchain4j-openai:0.23.0'
+
+	// 벡터 데이터베이스
+	implementation 'io.pinecone:pinecone-client:0.2.3'
+
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.batch:spring-batch-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
