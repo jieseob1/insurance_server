@@ -1,0 +1,17 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: document-service
+          uri: lb://document-service
+          predicates:
+            - Path=/api/documents/**
+        - id: claim-service
+          uri: lb://claim-service
+          predicates:
+            - Path=/api/claims/** 
