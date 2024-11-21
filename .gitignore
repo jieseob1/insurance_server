@@ -17,6 +17,7 @@ replay_pid*
 ### Intellij ###
 .idea/
 *.iws
+*.xml
 *.iml
 *.ipr
 out/
