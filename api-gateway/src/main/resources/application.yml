@@ -1,17 +1,78 @@
 server:
-  port: 8080
+  port: 8000
 
 spring:
   application:
-    name: api-gateway
-  cloud:
+    name: api-gateway # 어플리케이션 이름
+  cloud: # spring cloud gateway 설정
     gateway:
+      discovery: # 서비스 디스커버리 활성화
+        locator: # 서비스 디스커버리 로케이터 설정
+          enabled: true # 서비스 디스커버리 활성화
+          lower-case-service-id: true # 서비스 ID를 소문자로 변환
       routes:
-        - id: document-service
-          uri: lb://document-service
-          predicates:
-            - Path=/api/documents/**
+        - id: user-service  # 사용자 서비스 라우팅 설정
+          uri: lb://USER-SERVICE  # lb:// 는 로드밸런싱을 의미 => 이렇게 lb로 하면 어떻게 알아서 서비스를 찾아주는지 알아보기
+          predicates: # 경로 기반 라우팅 설정 => 경로 기반 라우팅은 특정 경로에 대한 요청을 특정 서비스로 라우팅하는 방법
+            - Path=/user-service/**
+          filters: # 필터 설정 => 필터는 요청을 처리하는 중간 단계로, 요청을 변환하거나 추가 작업을 수행할 수 있음
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker # Circuit Breaker 인스턴스 이름
+                fallbackUri: forward:/fallback/user # 장애 시 폴백 경로
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment} # 경로 재작성 => 경로 재작성은 요청 경로를 변환하는 방법
+
         - id: claim-service
-          uri: lb://claim-service
+          uri: lb://CLAIM-SERVICE
           predicates:
-            - Path=/api/claims/** 
+            - Path=/claim-service/**
+          filters:
+            - name: CircuitBreaker # Circuit Breaker 필터 적용 => Circuit Breaker 필터는 서비스 장애를 감지하고 대체 경로로 요청을 라우팅하는 역할
+              args:
+                name: claimServiceCircuitBreaker
+                fallbackUri: forward:/fallback/claim
+            - RewritePath=/claim-service/(?<segment>.*), /$\{segment}
+
+        - id: document-processing-service
+          uri: lb://DOCUMENT-PROCESSING-SERVICE
+          predicates:
+            - Path=/document-service/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: documentServiceCircuitBreaker
+                fallbackUri: forward:/fallback/document
+            - RewritePath=/document-service/(?<segment>.*), /$\{segment} # 경로 재작성 => 경로 재작성은 요청 경로를 변환하는 방법
+
+resilience4j: # resilience4j 설정 => resilience4j는 서비스 장애를 처리하는 라이브러리
+  circuitbreaker:
+    configs:
+      default: # 기본 설정
+        slidingWindowSize: 10 # 슬라이딩 윈도우 크기 => 슬라이딩 윈도우는 최근 호출 기록을 유지하는 방법 (상태 체크를 위한 호출 수)
+        minimumNumberOfCalls: 5 # 최소 호출 수 => 최소 호출 수는 서비스 장애를 판단하는 기준 (Circuit Breaker 판단을 위한 최소 호출 수)
+        permittedNumberOfCallsInHalfOpenState: 3 # Half-Open 상태에서 허용할 호출 수 => Half-Open 상태는 서비스가 일부 복구된 상태 (Circuit Breaker 판단을 위한 최소 호출 수)
+        failureRateThreshold: 50 # 실패율 임계값 => 실패율 임계값은 서비스 장애를 판단하는 기준 (%)
+        waitDurationInOpenState: 10000 # Circuit Open 상태 유지 시간 => Circuit Open 상태는 서비스 장애가 발생한 상태 (ms)
+    instances:
+      userServiceCircuitBreaker:
+        baseConfig: default
+      claimServiceCircuitBreaker:
+        baseConfig: default
+      documentServiceCircuitBreaker:
+        baseConfig: default
+
+eureka: # Eureka 설정 => Eureka는 서비스 디스커버리 서비스
+  client:
+    register-with-eureka: true # Eureka 서버에 서비스 등록
+    fetch-registry: true # Eureka 서버로부터 서비스 목록 가져오기
+    service-url:
+      defaultZone: http://localhost:8761/eureka # Eureka 서버 주소
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}} # 인스턴스 고유 ID => 인스턴스 고유 ID는 서비스 인스턴스를 식별하는 고유한 식별자
+
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" # 모든 Actuator 엔드포인트 노출

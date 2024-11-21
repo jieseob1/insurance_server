@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - insurance-network
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka-server
+    networks:
+      - insurance-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka-server
+      - api-gateway
+    networks:
+      - insurance-network
+    restart: unless-stopped
+
+  claim-service:
+    build:
+      context: ./claim-service
+      dockerfile: Dockerfile
+    container_name: claim-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka-server
+      - api-gateway
+    networks:
+      - insurance-network
+    restart: unless-stopped
+
+  document-processing-service:
+    build:
+      context: ./document-processing-service
+      dockerfile: Dockerfile
+    container_name: document-processing-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka-server
+      - api-gateway
+    networks:
+      - insurance-network
+    restart: unless-stopped
+
+networks:
+  insurance-network:
+    driver: bridge
