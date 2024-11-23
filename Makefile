@@ -27,6 +27,9 @@ claim:
 document:
 	docker-compose -f $(COMPOSE_FILE) up --build document-processing-service
 
+mongodb:
+	docker-compose -f $(COMPOSE_FILE) up --build mongodb
+
 # 개별 서비스 중지
 stop-eureka:
 	docker-compose -f $(COMPOSE_FILE) stop eureka-server

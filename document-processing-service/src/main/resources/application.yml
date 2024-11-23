@@ -1,6 +1,6 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/document-processing-service
+      uri: mongodb://localhost:27017/document_db
 #localhost:27017 은 mongodb 서버 주소
 #document-processing-service 는 데이터베이스 이름 => 데이터베이스 이름은 변경할 수도
